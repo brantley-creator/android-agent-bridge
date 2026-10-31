@@ -412,25 +412,46 @@ class BridgeAccessibilityService : AccessibilityService(), DevicePort {
     }
 
     private fun encode(screenshot: ScreenshotResult): ScreenshotGrab {
+        var hardware: Bitmap? = null
+        var current: Bitmap? = null
         return try {
-            val hardware = Bitmap.wrapHardwareBuffer(screenshot.hardwareBuffer, screenshot.colorSpace)
+            hardware = Bitmap.wrapHardwareBuffer(screenshot.hardwareBuffer, screenshot.colorSpace)
             screenshot.hardwareBuffer.close()
-            if (hardware == null) return ScreenshotGrab.Failed
-            val software =
-                if (hardware.config == Bitmap.Config.HARDWARE) {
-                    hardware.copy(Bitmap.Config.ARGB_8888, false)
+            val source = hardware ?: return ScreenshotGrab.Failed
+            current =
+                if (source.config == Bitmap.Config.HARDWARE) {
+                    source.copy(Bitmap.Config.ARGB_8888, false) ?: return ScreenshotGrab.Failed
                 } else {
-                    hardware
+                    source
                 }
-            val bytes = ByteArrayOutputStream()
-            software.compress(Bitmap.CompressFormat.PNG, 100, bytes)
-            if (software !== hardware) hardware.recycle()
-            software.recycle()
-            ScreenshotGrab.Png(bytes.toByteArray())
+            val limit = maxPngBytes()
+            repeat(8) {
+                val bitmap = current ?: return ScreenshotGrab.Failed
+                val png = bitmap.toPng() ?: return ScreenshotGrab.Failed
+                if (png.size <= limit) return ScreenshotGrab.Png(png)
+                val width = bitmap.width * 3 / 4
+                val height = bitmap.height * 3 / 4
+                if (width < 1 || height < 1) return ScreenshotGrab.Failed
+                val scaled = Bitmap.createScaledBitmap(bitmap, width, height, true)
+                if (scaled === bitmap) return ScreenshotGrab.Failed
+                if (bitmap !== hardware) bitmap.recycle()
+                current = scaled
+            }
+            ScreenshotGrab.Failed
         } catch (_: Throwable) {
             ScreenshotGrab.Failed
+        } finally {
+            val copy = current
+            if (copy != null && copy !== hardware) copy.recycle()
+            hardware?.recycle()
         }
     }
+}
+
+private fun Bitmap.toPng(): ByteArray? {
+    val bytes = ByteArrayOutputStream()
+    if (!compress(Bitmap.CompressFormat.PNG, 100, bytes)) return null
+    return bytes.toByteArray()
 }
 
 private fun AccessibilityNodeInfo.toNode(): NodeView {
