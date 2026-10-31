@@ -104,9 +104,10 @@ export class Room extends DurableObject<Env> {
     }
   }
 
-  async webSocketClose(ws: WebSocket, code: number, reason: string, wasClean: boolean): Promise<void> {
+  async webSocketClose(_ws: WebSocket, code: number, reason: string, wasClean: boolean): Promise<void> {
     console.log(JSON.stringify({ event: "close", code, clean: wasClean, reason: reason.slice(0, 32) }));
-    ws.close(code, reason);
+    // The runtime has already closed the socket. Closing again with 1005 or 1006
+    // throws, because those codes are reserved and must not be sent.
   }
 
   async webSocketError(_ws: WebSocket, _error: unknown): Promise<void> {
