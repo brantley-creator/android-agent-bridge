@@ -103,6 +103,8 @@ fun SettingsScreen(onBack: () -> Unit) {
             context.startActivity(intent)
         }) { Text("Ask to ignore battery optimizations") }
         Button(onClick = {
+            val app = context.applicationContext as BridgeApp
+            app.session.hangUp()
             ArmedService.stop(context)
             app.port.service?.disableSelf()
         }) { Text("Stop and turn off accessibility") }
@@ -116,6 +118,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 app.tokens.clear()
                 app.audit.clear()
                 app.core.disarm()
+                app.session.hangUp()
                 ArmedService.stop(context)
                 app.settings.update { it.copy(relayUrl = "", room = "", paired = false) }
             }

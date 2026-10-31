@@ -7,6 +7,7 @@ import dev.brantley.agentbridge.data.SecureTokenStore
 import dev.brantley.agentbridge.data.SettingsStore
 import dev.brantley.agentbridge.net.BridgeLog
 import dev.brantley.agentbridge.net.Rpc
+import dev.brantley.agentbridge.net.SessionLink
 import dev.brantley.agentbridge.net.SocketStatus
 import dev.brantley.agentbridge.safety.AuditLog
 import dev.brantley.agentbridge.safety.ConfirmAnswer
@@ -27,6 +28,8 @@ class BridgeApp : Application() {
     lateinit var core: PhoneCore
         private set
     lateinit var rpc: Rpc
+        private set
+    lateinit var session: SessionLink
         private set
     val link = MutableStateFlow(SocketStatus.Disconnected)
 
@@ -52,5 +55,6 @@ class BridgeApp : Application() {
                     ),
             )
         rpc = Rpc(core)
+        session = SessionLink(this)
     }
 }

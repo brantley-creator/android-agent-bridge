@@ -18,9 +18,6 @@ import androidx.core.content.ContextCompat
 import dev.brantley.agentbridge.BridgeApp
 import dev.brantley.agentbridge.R
 import dev.brantley.agentbridge.data.toSafety
-import dev.brantley.agentbridge.net.RelaySocket
-import dev.brantley.agentbridge.net.SocketStatus
-import dev.brantley.agentbridge.net.deviceWebSocketUrl
 import dev.brantley.agentbridge.ui.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,13 +28,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 class ArmedService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val gate = Mutex()
-    private var socket: RelaySocket? = null
     private var idleJob: Job? = null
     private var linkStarted = false
     private val screenOff =
@@ -77,7 +70,6 @@ class ArmedService : Service() {
 
     override fun onDestroy() {
         idleJob?.cancel()
-        socket?.disconnect()
         runCatching { unregisterReceiver(screenOff) }
         scope.cancel()
         super.onDestroy()
@@ -88,24 +80,8 @@ class ArmedService : Service() {
         scope.launch {
             val settings = app.settings.settings.first()
             app.core.config = settings.toSafety()
-            val token = app.tokens.get().orEmpty()
-            if (!app.core.armed.value || settings.relayUrl.isBlank() || settings.room.isBlank() || token.isBlank()) {
-                app.link.value = SocketStatus.Error
-                return@launch
-            }
-            val relay = RelaySocket(scope, isArmed = { app.core.armed.value })
-            socket = relay
-            relay.onStatus = { status -> app.link.value = status }
-            relay.onFrame = { frame ->
-                scope.launch {
-                    gate.withLock {
-                        val response = app.rpc.handle(frame)
-                        relay.send(response)
-                    }
-                }
-            }
-            relay.connect(deviceWebSocketUrl(settings.relayUrl, settings.room), token)
         }
+        app.session.listen()
     }
 
     private fun watchIdle() {
@@ -123,9 +99,6 @@ class ArmedService : Service() {
         val app = application as BridgeApp
         app.core.disarm()
         app.port.service?.cancelConfirm()
-        socket?.disconnect()
-        socket = null
-        app.link.value = SocketStatus.Disconnected
         stopForegroundAndSelf()
     }
 
