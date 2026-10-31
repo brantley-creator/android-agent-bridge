@@ -1,8 +1,11 @@
 package dev.brantley.agentbridge.ui
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 private val Ink = Color(0xFF101614)
@@ -25,5 +28,14 @@ private val Colors =
 
 @Composable
 fun AgentBridgeTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = Colors, content = content)
+    MaterialTheme(colorScheme = Colors) {
+        // MaterialTheme does not set a content color. Without this surface,
+        // text stays black on the dark window.
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Colors.background,
+            contentColor = Colors.onBackground,
+            content = content,
+        )
+    }
 }

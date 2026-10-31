@@ -1,8 +1,10 @@
 package dev.brantley.agentbridge.pair
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
@@ -26,15 +28,19 @@ import kotlinx.coroutines.launch
 class PairActivity : ComponentActivity() {
     private var status by mutableStateOf("Check the relay host and room, then tap Pair. The phone stays disarmed.")
     private var busy by mutableStateOf(false)
+    private var relay by mutableStateOf("")
+    private var room by mutableStateOf("")
+    private var code by mutableStateOf("")
+    private var host by mutableStateOf("")
+    private var ready by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val relay = intent?.data?.getQueryParameter("relay").orEmpty().trim()
-        val room = intent?.data?.getQueryParameter("room").orEmpty().trim()
-        val code = intent?.data?.getQueryParameter("code").orEmpty().trim()
-        val host = relayHost(relay)
-        val ready = looksLikeRelay(relay) && ROOM.matches(room) && code.isNotEmpty()
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(0xFF101614.toInt()),
+            navigationBarStyle = SystemBarStyle.dark(0xFF101614.toInt()),
+        )
+        applyIntent(intent)
         setContent {
             AgentBridgeTheme {
                 Column(
@@ -55,6 +61,23 @@ class PairActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        applyIntent(intent)
+    }
+
+    private fun applyIntent(intent: Intent?) {
+        val data = intent?.data
+        relay = data?.getQueryParameter("relay").orEmpty().trim()
+        room = data?.getQueryParameter("room").orEmpty().trim()
+        code = data?.getQueryParameter("code").orEmpty().trim()
+        host = relayHost(relay)
+        ready = looksLikeRelay(relay) && ROOM.matches(room) && code.isNotEmpty()
+        busy = false
+        status = "Check the relay host and room, then tap Pair. The phone stays disarmed."
     }
 
     private fun pair(relay: String, room: String, code: String, host: String) {
