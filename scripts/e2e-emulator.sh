@@ -157,6 +157,13 @@ cli() {
   (cd "$ROOT/box" && npx tsx src/cli.ts "$@")
 }
 
+# Quote the link on the device. An unquoted & is a shell command separator,
+# so the room and pair code never reach the activity.
+open_pair_link() {
+  local link="$1"
+  adb shell am start -a android.intent.action.VIEW -d "'$link'"
+}
+
 require_admin_token() {
   if [[ -z "${ABRIDGE_ADMIN_TOKEN:-}" ]]; then
     echo "Set ABRIDGE_ADMIN_TOKEN to the value in relay/.dev.vars. It is not printed." >&2
@@ -199,7 +206,7 @@ print(urllib.parse.urlunsplit((parts.scheme, parts.netloc, parts.path, urllib.pa
 PY
 )"
 
-adb shell am start -a android.intent.action.VIEW -d "$PHONE_LINK"
+open_pair_link "$PHONE_LINK"
 sleep 2
 tap_label "Pair"
 sleep 2
@@ -369,7 +376,7 @@ physical_setup() {
     link="$(printf '%s\n' "$pair_out" | head -n 1)"
     echo "Open this pair link on the phone. The admin token is not in it."
     printf '%s\n' "$link"
-    adb shell am start -a android.intent.action.VIEW -d "$link"
+    open_pair_link "$link"
     wait_manual "Check the host is 127.0.0.1 and the room matches the link, then tap Pair."
   fi
   if service_enabled; then
