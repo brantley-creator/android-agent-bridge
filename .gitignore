@@ -30,6 +30,12 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# On-device evidence. May contain screen contents. Never commit it.
+test-results/
+
+# Local wrangler state. Can contain the worker bundle and dev secrets.
+.wrangler/
+
 # OS / editor
 .DS_Store
 *.log
