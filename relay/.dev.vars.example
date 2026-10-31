@@ -1,0 +1,2 @@
+# Copy to .dev.vars (gitignored). Use a long random value. Never commit the real token.
+RELAY_ADMIN_TOKEN=replace-with-a-long-random-string

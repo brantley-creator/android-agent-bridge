@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Agent Bridge</string>
+    <string name="accessibility_description">Agent Bridge reads the screen as an element tree and performs taps you approve. It is an automation tool. It is off until you turn the service on and tap Arm. Stop is always on the notification and the Quick Settings tile.</string>
+    <string name="notif_channel">Agent Bridge armed</string>
+    <string name="notif_channel_desc">Shown while a session is armed. Stop ends the session.</string>
+    <string name="notif_title">Agent Bridge armed</string>
+    <string name="notif_text">The agent can ask to use the screen. Stop ends it immediately.</string>
+    <string name="notif_stop">Stop</string>
+    <string name="tile_label">Agent Bridge</string>
+</resources>

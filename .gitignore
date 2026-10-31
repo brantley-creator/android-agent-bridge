@@ -1,0 +1,37 @@
+# Gradle / Android
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+.cxx/
+captures/
+*.apk
+*.aab
+
+# Secrets and local config. Never commit a live relay, token, or .dev.vars.
+.env
+.env.*
+!.env.example
+.dev.vars
+**/.dev.vars
+google-services.json
+credentials.json
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+*.keystore
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# OS / editor
+.DS_Store
+*.log
+.pytest_cache/
+__pycache__/

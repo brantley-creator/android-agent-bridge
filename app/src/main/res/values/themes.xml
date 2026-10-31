@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AgentBridge" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#101614</item>
+        <item name="android:navigationBarColor">#101614</item>
+        <item name="android:windowBackground">#101614</item>
+        <item name="android:colorBackground">#101614</item>
+    </style>
+</resources>
