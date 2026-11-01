@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "abridge-protocol.schema.json",
+  "title": "Android Agent Bridge protocol",
+  "description": "Single source of truth for methods, params, and error codes. The phone enforces safety. The relay only authenticates and forwards frames. The box only speaks this envelope.",
+  "methods": [
+    "status",
+    "snapshot",
+    "tap",
+    "type",
+    "swipe",
+    "scroll",
+    "key",
+    "launch",
+    "list_apps",
+    "wait",
+    "screenshot"
+  ],
+  "writes": ["tap", "type", "swipe", "scroll", "key", "launch"],
+  "errorCodes": [
+    "STALE_REF",
+    "NOT_FOUND",
+    "BAD_ARGS",
+    "DENIED_APP",
+    "DENIED_BY_USER",
+    "CONFIRM_TIMEOUT",
+    "PAUSED",
+    "SESSION_EXPIRED",
+    "PASSWORD_FIELD",
+    "SECURE_SCREEN",
+    "A11Y_OFF",
+    "UNSUPPORTED",
+    "TIMEOUT"
+  ],
+  "retry": ["safe", "unsafe", "never"],
+  "request": {
+    "type": "object",
+    "required": ["id", "method", "params"],
+    "additionalProperties": false,
+    "properties": {
+      "id": { "type": "string", "minLength": 1 },
+      "method": { "type": "string", "enum": [
+        "status", "snapshot", "tap", "type", "swipe", "scroll", "key", "launch", "list_apps", "wait", "screenshot"
+      ]},
+      "params": { "type": "object" }
+    }
+  },
+  "response": {
+    "oneOf": [
+      {
+        "type": "object",
+        "required": ["id", "ok", "data"],
+        "properties": {
+          "id": { "type": "string" },
+          "ok": { "const": true },
+          "data": { "type": "object" }
+        }
+      },
+      {
+        "type": "object",
+        "required": ["id", "ok", "error"],
+        "properties": {
+          "id": { "type": "string" },
+          "ok": { "const": false },
+          "error": { "$ref": "#/$defs/error" }
+        }
+      }
+    ]
+  },
+  "$defs": {
+    "error": {
+      "type": "object",
+      "required": ["code", "message", "retry", "suggestion"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "retry": { "enum": ["safe", "unsafe", "never"] },
+        "suggestion": { "type": "string" }
+      }
+    },
+    "bounds": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "type": "integer" },
+      "description": "[left, top, right, bottom] in screen pixels"
+    },
+    "states": {
+      "type": "object",
+      "required": ["checked", "enabled", "focused", "selected", "scrollable", "editable", "password"],
+      "properties": {
+        "checked": { "type": "boolean" },
+        "enabled": { "type": "boolean" },
+        "focused": { "type": "boolean" },
+        "selected": { "type": "boolean" },
+        "scrollable": { "type": "boolean" },
+        "editable": { "type": "boolean" },
+        "password": { "type": "boolean" }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["role", "text", "desc", "viewId", "bounds", "states", "children"],
+      "properties": {
+        "role": { "type": "string", "description": "Accessibility class name" },
+        "text": { "type": "string", "description": "Password nodes are the literal [redacted]" },
+        "desc": { "type": "string" },
+        "viewId": { "type": "string" },
+        "bounds": { "$ref": "#/$defs/bounds" },
+        "states": { "$ref": "#/$defs/states" },
+        "ref": { "type": "string", "pattern": "^@[A-Za-z0-9_-]+:e[1-9][0-9]*$" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    }
+  },
+  "params": {
+    "status": {},
+    "snapshot": {
+      "interactiveOnly": { "type": "boolean", "default": true },
+      "maxNodes": { "type": "integer", "default": 300, "minimum": 1, "maximum": 2000 },
+      "rootRef": { "type": "string" }
+    },
+    "tap": {
+      "ref": { "type": "string" },
+      "x": { "type": "integer" },
+      "y": { "type": "integer" },
+      "long": { "type": "boolean", "default": false }
+    },
+    "type": {
+      "ref": { "type": "string" },
+      "text": { "type": "string" },
+      "clear": { "type": "boolean", "default": false },
+      "submit": { "type": "boolean", "default": false }
+    },
+    "swipe": {
+      "x1": { "type": "integer" },
+      "y1": { "type": "integer" },
+      "x2": { "type": "integer" },
+      "y2": { "type": "integer" },
+      "durationMs": { "type": "integer", "default": 300 }
+    },
+    "scroll": {
+      "ref": { "type": "string" },
+      "direction": { "enum": ["up", "down", "left", "right"] }
+    },
+    "key": {
+      "name": { "enum": ["back", "home", "recents", "notifications"] }
+    },
+    "launch": {
+      "package": { "type": "string" }
+    },
+    "list_apps": {},
+    "wait": {
+      "ms": { "type": "integer", "minimum": 0, "maximum": 15000 },
+      "forText": { "type": "string" },
+      "timeoutMs": { "type": "integer", "minimum": 0, "maximum": 15000 }
+    },
+    "screenshot": {}
+  }
+}

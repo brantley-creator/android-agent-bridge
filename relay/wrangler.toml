@@ -1,0 +1,15 @@
+name = "abridge-relay"
+main = "src/index.ts"
+compatibility_date = "2025-12-10"
+workers_dev = false
+
+# RELAY_ADMIN_TOKEN is a secret. Local dev reads relay/.dev.vars (gitignored).
+# Tests inject it through the vitest miniflare bindings. Nothing here is a credential.
+
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
