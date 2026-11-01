@@ -14,6 +14,10 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: android-actions/setup-android@v3
+        with:
+          # The action's default package list still includes "tools", which
+          # the SDK no longer publishes. platform-tools is enough here.
+          packages: platform-tools
       - name: Install SDK packages
         run: |
           yes | sdkmanager --licenses >/dev/null || true
@@ -63,15 +67,17 @@ jobs:
       - name: Fail closed on forbidden flags
         run: |
           set -euo pipefail
-          if grep -RIn --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=build "isAccessibilityTool" . ; then
+          # Search the product trees only. Searching the repo root matches
+          # this workflow, which names the forbidden strings in order to reject them.
+          if grep -RIn "isAccessibilityTool" app harness ; then
             echo "isAccessibilityTool must never be set"
             exit 1
           fi
-          if grep -RIn --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=build "QUERY_ALL_PACKAGES" . ; then
+          if grep -RIn "QUERY_ALL_PACKAGES" app harness ; then
             echo "QUERY_ALL_PACKAGES is not allowed"
             exit 1
           fi
-          if grep -RIn "wrangler deploy" .github relay/package.json box/package.json ; then
+          if grep -RIn "wrangler deploy" relay/package.json box/package.json relay/src box/src ; then
             echo "deploy is out of scope"
             exit 1
           fi
