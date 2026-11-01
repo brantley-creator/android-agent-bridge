@@ -1,7 +1,7 @@
 name = "abridge-relay"
 main = "src/index.ts"
 compatibility_date = "2025-12-10"
-workers_dev = false
+workers_dev = true
 
 # RELAY_ADMIN_TOKEN is a secret. Local dev reads relay/.dev.vars (gitignored).
 # Tests inject it through the vitest miniflare bindings. Nothing here is a credential.
