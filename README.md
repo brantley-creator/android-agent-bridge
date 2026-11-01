@@ -82,6 +82,33 @@ Each CLI call prints one JSON envelope and exits 0 on success, 1 on an error env
 
 `scripts/e2e-emulator.sh` runs the full path when `adb` can see a device: pair, launch Settings, snapshot, approve a tap, stale ref, deny, kill switch, denylist, password field, and audit. Without adb it prints the same steps and exits 2.
 
+## Hosted relay (workers.dev)
+
+The relay can run on Cloudflare Workers so the phone reaches it over Wi-Fi or cellular instead of `adb reverse`. `relay/wrangler.toml` sets `workers_dev = true`, so the Worker is served at:
+
+```text
+https://abridge-relay.<your-subdomain>.workers.dev
+```
+
+The account needs a workers.dev subdomain (opening Workers & Pages in the Cloudflare dashboard once creates it). The free Workers plan covers the SQLite-backed `Room` Durable Object.
+
+Set the admin secret on the Worker. It is never committed:
+
+```sh
+cd relay
+npx wrangler secret put RELAY_ADMIN_TOKEN
+```
+
+Check it is up with `curl https://abridge-relay.<your-subdomain>.workers.dev/health`. Then re-pair the phone against the hosted URL (release builds require HTTPS):
+
+```sh
+cd box
+ABRIDGE_ADMIN_TOKEN='the-hosted-admin-token' \
+  npx tsx src/cli.ts pair --relay https://abridge-relay.<your-subdomain>.workers.dev
+```
+
+The relay sees message contents in transit (no end-to-end encryption yet). All safety checks still run on the phone.
+
 ## Safety controls
 
 All of these are enforced on the phone.
