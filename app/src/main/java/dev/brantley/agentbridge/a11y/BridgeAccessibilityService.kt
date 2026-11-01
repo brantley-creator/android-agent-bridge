@@ -3,6 +3,7 @@ package dev.brantley.agentbridge.a11y
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.content.Intent
+import android.media.AudioManager
 import android.graphics.Bitmap
 import android.graphics.Path
 import android.graphics.PixelFormat
@@ -62,6 +63,8 @@ class SwitchingPort : DevicePort {
     override fun listApps(): List<ListedApp> = service?.listApps() ?: emptyList()
 
     override fun screenshot(): ScreenshotGrab = service?.screenshotBlocking() ?: ScreenshotGrab.Failed
+
+    override fun setMediaVolume(percent: Int): VolumeLevel? = service?.setMediaVolume(percent)
 
     override suspend fun settle() {
         service?.settle()
@@ -179,7 +182,13 @@ class BridgeAccessibilityService : AccessibilityService(), DevicePort {
         submit: Boolean,
     ): ActionResult =
         withNode(path, identity) { node ->
-            val existing = if (clear) "" else node.text?.toString().orEmpty()
+            val existing =
+                existingFieldText(
+                    clear = clear,
+                    shown = node.text?.toString(),
+                    hint = node.hintText?.toString(),
+                    showingHint = node.isShowingHintText,
+                )
             val args =
                 Bundle().apply {
                     putCharSequence(
@@ -256,6 +265,15 @@ class BridgeAccessibilityService : AccessibilityService(), DevicePort {
     }
 
     override fun screenshot(): ScreenshotGrab = screenshotBlocking()
+
+    override fun setMediaVolume(percent: Int): VolumeLevel? {
+        val manager = getSystemService(AUDIO_SERVICE) as? AudioManager ?: return null
+        val max = manager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val index = mediaVolumeIndex(percent, max)
+        manager.setStreamVolume(AudioManager.STREAM_MUSIC, index, 0)
+        val actual = manager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        return VolumeLevel(index = actual, max = max, percent = mediaVolumePercent(actual, max))
+    }
 
     fun screenshotBlocking(): ScreenshotGrab {
         val latch = java.util.concurrent.CountDownLatch(1)

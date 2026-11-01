@@ -124,7 +124,8 @@ class RelaySocket(
             }
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                webSocket.close(code, reason)
+                val echoed = runCatching { webSocket.close(closeCodeToSend(code), reason.take(123)) }
+                if (echoed.isFailure) runCatching { webSocket.close(1000, "") }
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
@@ -161,6 +162,15 @@ internal fun backoffDelayMs(attempt: Int, random: Random, capMs: Long = 30_000L)
     }
     val jitter = if (ceiling <= 1L) 0L else random.nextLong(ceiling)
     return (ceiling / 2 + jitter / 2).coerceIn(1L, capMs)
+}
+
+/**
+ * OkHttp rejects reserved close codes (1004–1006 and 1015–2999) and anything
+ * outside 1000–4999. Echo the peer only when the code is legal to send.
+ */
+internal fun closeCodeToSend(peerCode: Int): Int {
+    val rejected = peerCode < 1000 || peerCode >= 5000 || peerCode in 1004..1006 || peerCode in 1015..2999
+    return if (rejected) 1000 else peerCode
 }
 
 internal fun tokenInQuery(url: String): Boolean = QUERY_SECRET.containsMatchIn(url)

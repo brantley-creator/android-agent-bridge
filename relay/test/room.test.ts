@@ -1,5 +1,7 @@
 import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { adminOk } from "../src/index";
+import type { Env } from "../src/env";
 
 const ADMIN = "test-admin-token";
 
@@ -56,6 +58,21 @@ function nextMessage(socket: WebSocket): Promise<string> {
     );
   });
 }
+
+describe("admin secret fails closed", () => {
+  it("rejects pair/start when RELAY_ADMIN_TOKEN is unset or empty", async () => {
+    const request = new Request("http://relay.test/v1/pair/start", {
+      method: "POST",
+      headers: { Authorization: "Bearer test-admin-token" },
+    });
+    const unset = { ROOM: env.ROOM } as Env;
+    const empty = { ROOM: env.ROOM, RELAY_ADMIN_TOKEN: "" } as Env;
+    expect(await adminOk(request, unset)).toBe(false);
+    expect(await adminOk(request, empty)).toBe(false);
+    const noBearer = new Request("http://relay.test/v1/pair/start", { method: "POST" });
+    expect(await adminOk(noBearer, env)).toBe(false);
+  });
+});
 
 describe("relay auth, ported from meta-glasses-companion test_server_auth.py", () => {
   it("rejects a missing bearer on pair/start", async () => {

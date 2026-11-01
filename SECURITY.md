@@ -31,6 +31,7 @@ While the phone is armed, and only after the phone's own checks, the agent can:
 - list launcher apps
 - wait
 - take a PNG screenshot if that setting is on
+- set media volume (`STREAM_MUSIC` only) to a percent from 0 to 100. It does not change the ringer or Do Not Disturb
 
 It cannot run a shell, install or remove apps, read SMS, read notifications, read the clipboard, or open files. Launch uses the package's launcher intent only.
 
@@ -48,7 +49,7 @@ Password fields are redacted to `[redacted]` before they leave the phone. Typing
 - A denylisted foreground app: `snapshot` returns `DENIED_APP` and no tree. Other actions are blocked. Launching a denylisted package returns `DENIED_APP`.
 - Confirm mode Writes is the default. Settings always confirms, including during a five-minute approval.
 - No answer in 20 seconds is `CONFIRM_TIMEOUT`, not an approval.
-- Stop closes the socket immediately. Queued work does not run.
+- Stop, the Quick Settings tile, and the "Agent Bridge armed" notification disarm the phone. The relay socket stays connected. Commands return `PAUSED` until Arm is tapped again. Queued work does not run. Unpair is what closes the socket.
 - Screenshots are off until a person turns them on.
 - The accessibility service is not marked as an accessibility tool. The user enables it in Settings.
 
@@ -62,4 +63,4 @@ Password fields are redacted to `[redacted]` before they leave the phone. Typing
 
 ## Reporting
 
-This repository is private. Send issues to the owner. Do not include tokens, `.dev.vars`, room ids from a live session, or a snapshot of a real screen.
+Report security issues privately through GitHub Security Advisories on this repo. Do not include tokens, `.dev.vars`, room ids from a live session, or a snapshot of a real screen.

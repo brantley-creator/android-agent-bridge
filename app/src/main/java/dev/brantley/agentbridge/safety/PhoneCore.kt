@@ -157,6 +157,7 @@ class PhoneCore(
             "list_apps" -> listApps()
             "wait" -> wait(params)
             "screenshot" -> screenshot()
+            "volume" -> volume(params)
             else -> fail("UNSUPPORTED", "Unknown method.", "Use a method from the protocol.")
         }
 
@@ -320,6 +321,24 @@ class PhoneCore(
         return observed("wait")
     }
 
+    private suspend fun volume(params: JsonObject): Outcome {
+        val percent = params.intOrNull("percent") ?: return fail("BAD_ARGS", "Volume needs a percent.", "Pass an integer from 0 to 100.")
+        if (percent !in 0..100) return fail("BAD_ARGS", "Volume percent is out of range.", "Pass an integer from 0 to 100.")
+        val level = port.setMediaVolume(percent) ?: return fail("UNSUPPORTED", "The phone could not set media volume.", "Try again in a moment.")
+        port.settle()
+        val scene = if (port.a11yEnabled()) port.currentScene() else Scene("", "", NodeView("empty"))
+        return Outcome.Ok(
+            buildJsonObject {
+                put("performed", "volume")
+                put("stream", "music")
+                put("index", level.index)
+                put("max", level.max)
+                put("percent", level.percent)
+                put("observation", observation(scene))
+            },
+        )
+    }
+
     private fun screenshot(): Outcome =
         when (val shot = port.screenshot()) {
             is ScreenshotGrab.Png ->
@@ -396,6 +415,10 @@ class PhoneCore(
         if (method == "launch") {
             val packageName = params.string("package") ?: return fail("BAD_ARGS", "Launch needs a package name.", "Pass a launcher package.")
             if (!PACKAGE.matches(packageName)) return fail("BAD_ARGS", "That package name is not valid.", "Use a Java package name.")
+        }
+        if (method == "volume") {
+            val percent = params.intOrNull("percent") ?: return fail("BAD_ARGS", "Volume needs a percent.", "Pass an integer from 0 to 100.")
+            if (percent !in 0..100) return fail("BAD_ARGS", "Volume percent is out of range.", "Pass an integer from 0 to 100.")
         }
         return null
     }

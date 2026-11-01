@@ -6,6 +6,9 @@ import dev.brantley.agentbridge.a11y.ListedApp
 import dev.brantley.agentbridge.a11y.NodeIdentity
 import dev.brantley.agentbridge.a11y.Scene
 import dev.brantley.agentbridge.a11y.ScreenshotGrab
+import dev.brantley.agentbridge.a11y.VolumeLevel
+import dev.brantley.agentbridge.a11y.mediaVolumeIndex
+import dev.brantley.agentbridge.a11y.mediaVolumePercent
 
 class FakePort(
     var scene: Scene,
@@ -16,6 +19,9 @@ class FakePort(
     var launched: String? = null
     var secure = false
     var lastTyped: String? = null
+    var volumeMax = 15
+    var volumeSets = 0
+    var lastVolumePercent: Int? = null
 
     override fun a11yEnabled(): Boolean = a11y
 
@@ -57,6 +63,13 @@ class FakePort(
     override fun listApps(): List<ListedApp> = listOf(ListedApp("com.example.messages", "Messages"))
 
     override fun screenshot(): ScreenshotGrab = if (secure) ScreenshotGrab.Secure else ScreenshotGrab.Png(byteArrayOf(1, 2, 3))
+
+    override fun setMediaVolume(percent: Int): VolumeLevel {
+        volumeSets += 1
+        lastVolumePercent = percent
+        val index = mediaVolumeIndex(percent, volumeMax)
+        return VolumeLevel(index, volumeMax, mediaVolumePercent(index, volumeMax))
+    }
 
     override suspend fun settle() = Unit
 

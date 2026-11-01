@@ -15,8 +15,13 @@ export interface FakeRelay {
   room: string;
   agentToken: string;
   deviceToken: string;
+  agentSockets: number;
+  dropAgents: () => Promise<void>;
   close: () => Promise<void>;
 }
+
+const PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
 const SNAPSHOT = {
   snapshot_id: "s1",
@@ -51,6 +56,7 @@ export async function startFakeRelay(): Promise<FakeRelay> {
   const deviceToken = "device-token-test";
   const rooms = new Map<string, FakeRoom>();
   rooms.set(room, { agentToken, deviceToken });
+  let agentSockets = 0;
 
   const server = createServer((req, res) => {
     if (req.method === "POST" && req.url === "/v1/pair/start") {
@@ -87,6 +93,10 @@ export async function startFakeRelay(): Promise<FakeRelay> {
       const previous = state[role];
       if (previous && previous.readyState === previous.OPEN) previous.close(4001, "replaced");
       state[role] = ws;
+      if (role === "agent") agentSockets += 1;
+      ws.on("close", () => {
+        if (state[role] === ws) state[role] = undefined;
+      });
       ws.on("message", (data) => {
         const other = role === "agent" ? state.device : state.agent;
         if (other && other.readyState === other.OPEN) other.send(data.toString());
@@ -104,6 +114,19 @@ export async function startFakeRelay(): Promise<FakeRelay> {
     room,
     agentToken,
     deviceToken,
+    get agentSockets() {
+      return agentSockets;
+    },
+    dropAgents: () =>
+      new Promise((resolve) => {
+        const agent = rooms.get(room)?.agent;
+        if (!agent || agent.readyState !== agent.OPEN) {
+          resolve();
+          return;
+        }
+        agent.once("close", () => resolve());
+        agent.close(1000, "test");
+      }),
     close: () =>
       new Promise((resolve) => {
         for (const client of wss.clients) client.terminate();
@@ -125,12 +148,23 @@ function connectFakeDevice(url: string, room: string, token: string): Promise<vo
     socket.on("error", (error) => reject(error));
     socket.on("message", (data) => {
       const request = JSON.parse(data.toString()) as { id?: string; method?: string };
-      if (request.method === "snapshot") {
-        socket.send(JSON.stringify({ id: request.id, ok: true, data: SNAPSHOT }));
-        return;
-      }
-      socket.send(
-        JSON.stringify({
+      const reply = (body: unknown) => {
+        if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(body));
+      };
+      setTimeout(() => {
+        if (request.method === "snapshot") {
+          reply({ id: request.id, ok: true, data: SNAPSHOT });
+          return;
+        }
+        if (request.method === "status") {
+          reply({ id: request.id, ok: true, data: { armed: true } });
+          return;
+        }
+        if (request.method === "screenshot") {
+          reply({ id: request.id, ok: true, data: { mime: "image/png", base64: PNG_BASE64 } });
+          return;
+        }
+        reply({
           id: request.id,
           ok: false,
           error: {
@@ -139,8 +173,8 @@ function connectFakeDevice(url: string, room: string, token: string): Promise<vo
             retry: "never",
             suggestion: "Call snapshot.",
           },
-        }),
-      );
+        });
+      }, 40);
     });
   });
 }

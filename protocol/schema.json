@@ -14,9 +14,10 @@
     "launch",
     "list_apps",
     "wait",
-    "screenshot"
+    "screenshot",
+    "volume"
   ],
-  "writes": ["tap", "type", "swipe", "scroll", "key", "launch"],
+  "writes": ["tap", "type", "swipe", "scroll", "key", "launch", "volume"],
   "errorCodes": [
     "STALE_REF",
     "NOT_FOUND",
@@ -40,7 +41,7 @@
     "properties": {
       "id": { "type": "string", "minLength": 1 },
       "method": { "type": "string", "enum": [
-        "status", "snapshot", "tap", "type", "swipe", "scroll", "key", "launch", "list_apps", "wait", "screenshot"
+        "status", "snapshot", "tap", "type", "swipe", "scroll", "key", "launch", "list_apps", "wait", "screenshot", "volume"
       ]},
       "params": { "type": "object" }
     }
@@ -156,6 +157,9 @@
       "forText": { "type": "string" },
       "timeoutMs": { "type": "integer", "minimum": 0, "maximum": 15000 }
     },
-    "screenshot": {}
+    "screenshot": {},
+    "volume": {
+      "percent": { "type": "integer", "minimum": 0, "maximum": 100 }
+    }
   }
 }

@@ -23,6 +23,7 @@ import androidx.lifecycle.lifecycleScope
 import dev.brantley.agentbridge.BridgeApp
 import dev.brantley.agentbridge.net.relayHost
 import dev.brantley.agentbridge.ui.AgentBridgeTheme
+import dev.brantley.agentbridge.ui.MainActivity
 import kotlinx.coroutines.launch
 
 class PairActivity : ComponentActivity() {
@@ -89,7 +90,16 @@ class PairActivity : ComponentActivity() {
                 val token = Pairing.claim(relay, room, code, deviceName())
                 app.tokens.put(token)
                 app.settings.update { it.copy(relayUrl = relay, room = room, paired = true) }
-                status = "Paired with $host. Open Agent Bridge and tap Arm session when you want control."
+                val landing = PairLanding.afterSuccess()
+                status = landing.message
+                if (landing.finishPairScreen) {
+                    startActivity(
+                        Intent(this@PairActivity, MainActivity::class.java)
+                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                            .putExtra(PairLanding.EXTRA_JUST_PAIRED, true),
+                    )
+                    finish()
+                }
             } catch (_: Exception) {
                 status = "Pairing failed. The code may already be used or expired."
                 busy = false

@@ -32,7 +32,7 @@ data class SafetyConfig(
 object Policy {
     const val SELF = "dev.brantley.agentbridge"
     const val SETTINGS = "com.android.settings"
-    val WRITES = setOf("tap", "type", "swipe", "scroll", "key", "launch")
+    val WRITES = setOf("tap", "type", "swipe", "scroll", "key", "launch", "volume")
 
     val STARTER_DENY =
         setOf(

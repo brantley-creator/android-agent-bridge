@@ -17,6 +17,20 @@ android {
         versionName = "0.1.0"
     }
 
+    val keystoreFile = System.getenv("ABRIDGE_KEYSTORE_FILE").orEmpty()
+    val keystorePassword = System.getenv("ABRIDGE_KEYSTORE_PASSWORD").orEmpty()
+    val hasReleaseKeystore = keystoreFile.isNotBlank() && keystorePassword.isNotBlank()
+    if (hasReleaseKeystore) {
+        signingConfigs {
+            create("ciRelease") {
+                storeFile = file(keystoreFile)
+                storePassword = keystorePassword
+                keyAlias = System.getenv("ABRIDGE_KEY_ALIAS")?.takeIf { it.isNotBlank() } ?: "abridge"
+                keyPassword = System.getenv("ABRIDGE_KEY_PASSWORD")?.takeIf { it.isNotBlank() } ?: keystorePassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -24,6 +38,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            if (hasReleaseKeystore) {
+                signingConfig = signingConfigs.getByName("ciRelease")
+            }
         }
         debug {
             isMinifyEnabled = false

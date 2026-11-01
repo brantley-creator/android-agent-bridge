@@ -25,6 +25,7 @@ fun HomeScreen(
     onDisarm: () -> Unit,
     onAudit: () -> Unit,
     onSettings: () -> Unit,
+    notice: String? = null,
 ) {
     val app = LocalContext.current.applicationContext as BridgeApp
     val settings by app.settings.settings.collectAsState(initial = null)
@@ -37,6 +38,9 @@ fun HomeScreen(
     ) {
         Spacer(Modifier.height(12.dp))
         Text("Agent Bridge", style = MaterialTheme.typography.headlineMedium)
+        if (!notice.isNullOrBlank()) {
+            Text(notice, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        }
         Text(
             if (armed) "Armed" else "Disarmed",
             style = MaterialTheme.typography.headlineSmall,

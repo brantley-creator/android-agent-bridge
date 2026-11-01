@@ -54,6 +54,8 @@ interface DevicePort {
 
     fun screenshot(): ScreenshotGrab
 
+    fun setMediaVolume(percent: Int): VolumeLevel?
+
     suspend fun settle()
 
     suspend fun delayMs(ms: Long)
@@ -71,6 +73,7 @@ fun describeAction(method: String, params: JsonObject, scene: Scene, label: Stri
         "scroll" -> "Scroll ${params.string("direction").orEmpty()} in $where".replace("  ", " ").trim()
         "key" -> "Press ${params.string("name") ?: "key"} in $where"
         "launch" -> "Launch ${params.string("package") ?: "an app"}"
+        "volume" -> "Set media volume to ${params.intOrNull("percent") ?: "?"} percent in $where"
         "snapshot" -> "Read the screen in $where"
         "screenshot" -> "Take a screenshot of $where"
         "wait" -> "Wait in $where"

@@ -31,16 +31,17 @@ Failure:
 | `status` | `{}` | Armed flag, accessibility, confirm mode, foreground package. Not a write. |
 | `snapshot` | `interactiveOnly=true`, `maxNodes=300`, optional `rootRef` | Element tree. Refused with `DENIED_APP` and no tree when the foreground app is denylisted. |
 | `tap` | `ref` or `x`,`y`, `long=false` | Write. |
-| `type` | optional `ref`, `text`, `clear=false`, `submit=false` | Write. Password targets return `PASSWORD_FIELD`. Typed text is never stored in the audit log. |
+| `type` | optional `ref`, `text`, `clear=false`, `submit=false` | Write. Password targets return `PASSWORD_FIELD`. Typed text is never stored in the audit log. Hint or placeholder text (`isShowingHintText`, or text equal to `hintText`) is treated as empty, so a type without `clear` does not append to it. |
 | `swipe` | `x1,y1,x2,y2`, `durationMs=300` | Write. |
 | `scroll` | optional `ref`, `direction` `up\|down\|left\|right` | Write. |
 | `key` | `name` `back\|home\|recents\|notifications` | Write. |
 | `launch` | `package` | Starts that package's launcher activity only. Denylisted packages return `DENIED_APP`. |
+| `volume` | `percent` 0–100 | Write. Sets `STREAM_MUSIC` only. The phone rounds the percent onto that stream's max index and returns `stream`, `index`, `max`, and the resulting `percent`. No ringer or Do Not Disturb change. |
 | `list_apps` | `{}` | Launcher activities visible through the manifest `<queries>` filter. |
 | `wait` | `{ms}` or `{forText, timeoutMs<=15000}` | `ms` is also capped at 15000. |
 | `screenshot` | `{}` | Off unless the phone setting is on. PNG base64. `SECURE_SCREEN` when the window is `FLAG_SECURE`. |
 
-Writes are `tap`, `type`, `swipe`, `scroll`, `key`, and `launch`.
+Writes are `tap`, `type`, `swipe`, `scroll`, `key`, `launch`, and `volume`.
 
 Every write, `launch`, and `wait` returns a compact post-action observation after the UI settles (300 ms idle, or 2 s max):
 
@@ -102,7 +103,7 @@ The phone keeps the last 3 snapshots. A ref resolves only when that snapshot is 
 | `DENIED_APP` | never | Foreground or launch target is denylisted. No tree is returned. |
 | `DENIED_BY_USER` | never | The person denied the confirm prompt, or screenshots are off. |
 | `CONFIRM_TIMEOUT` | unsafe | No answer within 20 seconds. |
-| `PAUSED` | never | Disarmed. Arming is a tap on the phone. |
+| `PAUSED` | never | Disarmed. Arming is a tap on the phone. Stop, the Quick Settings tile, and the kill notification disarm without closing the relay socket. Later commands return `PAUSED` until Arm. Queued work does not run. |
 | `SESSION_EXPIRED` | never | Idle or total session timer elapsed. The phone disarms. |
 | `PASSWORD_FIELD` | never | Type into a password node. |
 | `SECURE_SCREEN` | never | Screenshot of a secure window. |
@@ -127,4 +128,4 @@ Tokens are 32 random bytes, encoded as base64url. Only SHA-256 hashes are stored
 agentbridge://pair?relay=<url>&room=<room>&code=<code>
 ```
 
-The phone shows the relay host and room and pairs only after a tap. It does not arm itself.
+The phone shows the relay host and room and pairs only after a tap. It does not arm itself. After a successful pair, the pair screen finishes and the main screen shows "Paired. Tap Arm session to start." Arm is still a separate tap.

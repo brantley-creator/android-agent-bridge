@@ -1,12 +1,20 @@
 {
   "name": "abridge-relay",
   "private": true,
+  "license": "Apache-2.0",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "WRANGLER_SEND_METRICS=false wrangler dev",
     "test": "WRANGLER_SEND_METRICS=false vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "cloudflare": {
+    "bindings": {
+      "RELAY_ADMIN_TOKEN": {
+        "description": "Admin secret for `pair/start`. Generate with `openssl rand -hex 32`. Keep it; the box CLI needs it to pair."
+      }
+    }
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.10.15",

@@ -658,7 +658,7 @@ tools = [tool.get("name") for tool in listed.get("result", {}).get("tools", [])]
 expected = [
     "phone_status", "phone_snapshot", "phone_tap", "phone_type", "phone_swipe",
     "phone_scroll", "phone_key", "phone_launch", "phone_list_apps", "phone_wait",
-    "phone_screenshot",
+    "phone_screenshot", "phone_volume",
 ]
 missing = [name for name in expected if name not in tools]
 send({
