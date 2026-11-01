@@ -1,6 +1,7 @@
 package dev.brantley.agentbridge.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -18,12 +19,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.brantley.agentbridge.BridgeApp
 import dev.brantley.agentbridge.data.toSafety
+import dev.brantley.agentbridge.pair.PairLanding
 import dev.brantley.agentbridge.safety.ArmedService
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
     private var pendingArm by mutableStateOf(false)
+    private var notice by mutableStateOf<String?>(null)
 
     private val notifications =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -37,6 +40,7 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(0xFF101614.toInt()),
             navigationBarStyle = SystemBarStyle.dark(0xFF101614.toInt()),
         )
+        notice = noticeFrom(intent)
         setContent {
             AgentBridgeTheme {
                 val nav = rememberNavController()
@@ -47,6 +51,7 @@ class MainActivity : ComponentActivity() {
                             onDisarm = { ArmedService.stop(this@MainActivity) },
                             onAudit = { nav.navigate("audit") },
                             onSettings = { nav.navigate("settings") },
+                            notice = notice,
                         )
                     }
                     composable("audit") { AuditScreen(onBack = { nav.popBackStack() }) }
@@ -55,6 +60,15 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        noticeFrom(intent)?.let { notice = it }
+    }
+
+    private fun noticeFrom(intent: Intent): String? =
+        if (intent.getBooleanExtra(PairLanding.EXTRA_JUST_PAIRED, false)) PairLanding.MESSAGE else null
 
     private fun requestArm() {
         if (Build.VERSION.SDK_INT >= 33 &&

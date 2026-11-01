@@ -89,7 +89,7 @@ function usage(): string {
 abridge <method> [json-params]
 abridge mcp
 
-Methods: status snapshot tap type swipe scroll key launch list_apps wait screenshot
+Methods: status snapshot tap type swipe scroll key launch list_apps wait screenshot volume
 Config: ~/.config/abridge/config.json or ABRIDGE_RELAY_URL, ABRIDGE_ROOM, ABRIDGE_AGENT_TOKEN
 `;
 }

@@ -119,6 +119,7 @@ describe("abridge mcp", () => {
           "phone_swipe",
           "phone_tap",
           "phone_type",
+          "phone_volume",
           "phone_wait",
         ].sort(),
       );
@@ -131,6 +132,22 @@ describe("abridge mcp", () => {
       const envelope = JSON.parse(text) as { ok: boolean; data: { window_title: string } };
       expect(envelope.ok).toBe(true);
       expect(envelope.data.window_title).toBe("Messages");
+      const sockets = relay.agentSockets;
+      const [again, status] = await Promise.all([
+        client.callTool({ name: "phone_snapshot", arguments: {} }),
+        client.callTool({ name: "phone_status", arguments: {} }),
+      ]);
+      expect(relay.agentSockets).toBe(sockets);
+      const againText = (again.content as Array<{ text: string }>)[0].text;
+      const statusText = (status.content as Array<{ text: string }>)[0].text;
+      expect(JSON.parse(againText).ok).toBe(true);
+      expect(JSON.parse(statusText).data.armed).toBe(true);
+      const shot = await client.callTool({ name: "phone_screenshot", arguments: {} });
+      const image = (shot.content as Array<{ type: string; data?: string; mimeType?: string; text?: string }>)[0];
+      expect(image.type).toBe("image");
+      expect(image.mimeType).toBe("image/png");
+      expect(image.data?.startsWith("iVBORw0KGgo")).toBe(true);
+      expect(image.text).toBeUndefined();
     } finally {
       await client.close();
     }

@@ -61,7 +61,7 @@ export default {
   },
 };
 
-async function adminOk(request: Request, env: Env): Promise<boolean> {
+export async function adminOk(request: Request, env: Env): Promise<boolean> {
   const expected = env.RELAY_ADMIN_TOKEN ?? "";
   if (!expected) return false;
   const presented = bearerToken(request);

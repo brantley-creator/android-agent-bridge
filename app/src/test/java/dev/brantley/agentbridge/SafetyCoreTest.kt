@@ -177,6 +177,55 @@ class SafetyCoreTest {
         assertFalse(core.armed.value)
         assertEquals("PAUSED", fail(core.handle("tap", buildJsonObject { put("x", 1); put("y", 2) })))
     }
+
+    @Test
+    fun volumeSetsMusicStreamThroughConfirmAndAudit() = runBlocking {
+        val prompts = mutableListOf<String>()
+        val world =
+            world(
+                prompter = { description ->
+                    prompts += description
+                    ConfirmAnswer.APPROVE
+                },
+            )
+        assertEquals("PAUSED", fail(world.core.handle("volume", buildJsonObject { put("percent", 40) })))
+        assertEquals(0, world.port.volumeSets)
+        world.core.arm(0)
+        val data = ok(world.core.handle("volume", buildJsonObject { put("percent", 40) }))
+        assertEquals("music", data.string("stream"))
+        assertEquals("volume", data.string("performed"))
+        assertEquals(6, data.int("index"))
+        assertEquals(15, data.int("max"))
+        assertEquals(40, data.int("percent"))
+        assertEquals(40, world.port.lastVolumePercent)
+        assertEquals(listOf("Set media volume to 40 percent in Messages"), prompts)
+        assertEquals("volume", world.audit.entries.last().method)
+        assertEquals("OK", world.audit.entries.last().result)
+        world.core.disarm()
+        assertEquals("PAUSED", fail(world.core.handle("volume", buildJsonObject { put("percent", 10) })))
+        assertEquals(1, world.port.volumeSets)
+        world.core.arm(0)
+        assertEquals("BAD_ARGS", fail(world.core.handle("volume", buildJsonObject { put("percent", 101) })))
+        assertEquals("BAD_ARGS", fail(world.core.handle("volume", buildJsonObject { })))
+        assertEquals(1, world.port.volumeSets)
+        val denied =
+            world(
+                prompter = {
+                    ConfirmAnswer.DENY
+                },
+            )
+        denied.core.arm(0)
+        assertEquals("DENIED_BY_USER", fail(denied.core.handle("volume", buildJsonObject { put("percent", 20) })))
+        assertEquals(0, denied.port.volumeSets)
+        world.core.config = SafetyConfig(confirmMode = ConfirmMode.OFF)
+        world.port.scene = Scene("com.android.settings", "Settings", messages())
+        val before = prompts.size
+        val muted = ok(world.core.handle("volume", buildJsonObject { put("percent", 0) }))
+        assertTrue(prompts.size > before)
+        assertEquals(0, muted.int("index"))
+        assertEquals(0, muted.int("percent"))
+        assertTrue(prompts.last().contains("Settings"))
+    }
 }
 
 private class World(
