@@ -4,7 +4,7 @@ An Android app dials out to a small relay. A CLI and MCP server on a Linux box t
 
 The phone is the only safety boundary. The relay checks tokens and forwards frames. Nothing on the box or the relay can arm the phone, skip a confirm, or turn the kill switch off.
 
-The package name is `dev.brantley.agentbridge`. This README is the path for a fresh agent or a developer.
+The package name is `dev.brantley.agentbridge`. This README is the path for a fresh agent or a developer. A Grok Bot assistant controlling this phone, or the user's own computer, follows [docs/PLAYBOOK.md](docs/PLAYBOOK.md).
 
 ## 1. Clone
 
