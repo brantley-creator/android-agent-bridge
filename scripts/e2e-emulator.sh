@@ -620,7 +620,7 @@ PY
   fi
 
   wait_manual "Open Agent Bridge and tap Arm session, then press Home. The MCP snapshot needs the session armed and this app in the background."
-  if ! ROOT="$ROOT" MCP_OUT="$RESULTS_DIR/j-mcp.json" python3 - <<'PY'
+  if ROOT="$ROOT" MCP_OUT="$RESULTS_DIR/j-mcp.json" python3 - <<'PY'
 import json, os, subprocess, sys
 root = os.environ["ROOT"]
 proc = subprocess.Popen(
