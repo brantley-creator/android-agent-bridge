@@ -6,7 +6,7 @@ This is the longer version of the numbered path in `README.md`, plus the failure
 
 - JDK 17
 - Android SDK 36 and build-tools 35 (`ANDROID_HOME` set)
-- Node 20 or newer
+- Node 22.12 or newer
 - `adb` on the host, USB debugging on the phone
 - A Cloudflare account only if you want a hosted relay. Local `npm run dev` does not need one.
 

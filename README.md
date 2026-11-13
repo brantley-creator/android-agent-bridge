@@ -8,7 +8,7 @@ The package name is `dev.brantley.agentbridge`. This README is the path for a fr
 
 ## 1. Clone
 
-Requirements: JDK 17, Android SDK 36 (build-tools 35), Node 20 or newer, and `adb`.
+Requirements: JDK 17, Android SDK 36 (build-tools 35), Node 22.12 or newer, and `adb`.
 
 ```sh
 git clone https://github.com/brantley-creator/android-agent-bridge

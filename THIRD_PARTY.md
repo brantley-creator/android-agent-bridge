@@ -35,8 +35,8 @@ Licenses below were checked against the installed package `license` field (npm) 
 | Android app | core-ktx 1.15.0, activity-compose 1.10.0, activity-ktx 1.10.0, lifecycle-runtime-ktx 2.8.7, lifecycle-viewmodel-compose 2.8.7, lifecycle-runtime-compose 2.8.7, navigation-compose 2.8.7, datastore-preferences 1.1.2, Compose BOM 2025.01.01 (ui, ui-graphics, ui-tooling, ui-tooling-preview, material3, material-icons-extended), OkHttp 4.12.0, kotlinx-coroutines-android 1.10.1, kotlinx-serialization-json 1.8.0, Kotlin 2.1.10, Android Gradle Plugin 8.9.1 | UI, socket, JSON, preferences. All Apache-2.0. |
 | Harness | core-ktx 1.15.0 | Password-field fixture only. Apache-2.0. |
 | Android tests | JUnit 4.13.2 (EPL-1.0), OkHttp mockwebserver 4.12.0 (Apache-2.0), kotlinx-coroutines-test 1.10.1 (Apache-2.0) | JVM tests. MockWebServer binds localhost only. |
-| Relay dev | wrangler 4.54.0 (MIT OR Apache-2.0), `@cloudflare/workers-types` 4.20251210.0 (MIT OR Apache-2.0), `@cloudflare/vitest-pool-workers` 0.10.15 (MIT), vitest 3.2.4 (MIT), typescript 5.9.3 (Apache-2.0) | Local worker and tests. No runtime npm dependency. |
-| Box runtime | `@modelcontextprotocol/sdk` 1.32.2 (MIT, manifest `^1.20.2`), `ws` 8.22.1 (MIT, manifest `^8.18.3`), `zod` 3.25.76 (MIT), `qrcode-terminal` 0.12.0 (Apache-2.0) | CLI and MCP. |
-| Box dev | tsx 4.23.15 (MIT), vitest 3.2.7 (MIT), `@types/node` 24.19.2 (MIT), `@types/qrcode-terminal` 0.12.2 (MIT), `@types/ws` 8.18.2 (MIT), typescript 5.9.3 (Apache-2.0) | Tests and the TypeScript runner. |
+| Relay dev | wrangler 4.161.0 (MIT OR Apache-2.0), `@cloudflare/workers-types` 5.20261113.1 (MIT OR Apache-2.0), `@cloudflare/vitest-plugin` 1.8.1 (MIT), vitest 4.1.12 (MIT), typescript 5.9.3 (Apache-2.0) | Local worker and tests. No runtime npm dependency. |
+| Box runtime | `@modelcontextprotocol/sdk` 1.32.2 (MIT, manifest `^1.20.2`), `ws` 8.22.1 (MIT, manifest `^8.18.3`), `zod` 4.6.7 (MIT), `qrcode-terminal` 0.12.0 (Apache-2.0) | CLI and MCP. |
+| Box dev | tsx 4.23.15 (MIT), vitest 4.1.12 (MIT), `@types/node` 24.19.2 (MIT), `@types/qrcode-terminal` 0.12.2 (MIT), `@types/ws` 8.18.2 (MIT), typescript 5.9.3 (Apache-2.0) | Tests and the TypeScript runner. |
 
 Registries contacted at build time are Google Maven, Maven Central, npm, and `services.gradle.org`. The running app does not call them.
