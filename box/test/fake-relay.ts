@@ -17,6 +17,10 @@ export interface FakeRelay {
   deviceToken: string;
   agentSockets: number;
   dropAgents: () => Promise<void>;
+  pauseAgent: () => void;
+  holdDevice: () => void;
+  releaseDevice: () => void;
+  connectAgent: () => Promise<void>;
   close: () => Promise<void>;
 }
 
@@ -57,6 +61,8 @@ export async function startFakeRelay(): Promise<FakeRelay> {
   const rooms = new Map<string, FakeRoom>();
   rooms.set(room, { agentToken, deviceToken });
   let agentSockets = 0;
+  const gate = { hold: false };
+  const extras: Ws[] = [];
 
   const server = createServer((req, res) => {
     if (req.method === "POST" && req.url === "/v1/pair/start") {
@@ -85,8 +91,7 @@ export async function startFakeRelay(): Promise<FakeRelay> {
     const role = match[2] as "device" | "agent";
     const expected = role === "agent" ? state?.agentToken : state?.deviceToken;
     if (!state || (req.headers.authorization ?? "") !== `Bearer ${expected}`) {
-      socket.write("HTTP/1.1 401 Unauthorized\r\nConnection: close\r\nContent-Length: 0\r\n\r\n");
-      socket.destroy();
+      socket.end("HTTP/1.1 401 Unauthorized\r\nConnection: close\r\nContent-Length: 0\r\n\r\n");
       return;
     }
     wss.handleUpgrade(req, socket, head, (ws) => {
@@ -94,6 +99,7 @@ export async function startFakeRelay(): Promise<FakeRelay> {
       if (previous && previous.readyState === previous.OPEN) previous.close(4001, "replaced");
       state[role] = ws;
       if (role === "agent") agentSockets += 1;
+      ws.on("error", () => {});
       ws.on("close", () => {
         if (state[role] === ws) state[role] = undefined;
       });
@@ -107,7 +113,8 @@ export async function startFakeRelay(): Promise<FakeRelay> {
   await listen(server);
   const address = server.address() as AddressInfo;
   const url = `http://127.0.0.1:${address.port}`;
-  await connectFakeDevice(url, room, deviceToken);
+  await connectFakeDevice(url, room, deviceToken, gate);
+  const agentUrl = `${url.replace(/^http/, "ws")}/v1/room/${encodeURIComponent(room)}/agent`;
   return {
     url,
     admin,
@@ -127,8 +134,34 @@ export async function startFakeRelay(): Promise<FakeRelay> {
         agent.once("close", () => resolve());
         agent.close(1000, "test");
       }),
+    pauseAgent: () => {
+      const agent = rooms.get(room)?.agent;
+      if (!agent || agent.readyState !== agent.OPEN) return;
+      agent.pong = () => {};
+      agent.pause();
+    },
+    holdDevice: () => {
+      gate.hold = true;
+    },
+    releaseDevice: () => {
+      gate.hold = false;
+    },
+    connectAgent: () =>
+      new Promise((resolve, reject) => {
+        const socket = new WebSocket(agentUrl, { headers: { Authorization: `Bearer ${agentToken}` } });
+        extras.push(socket);
+        let opened = false;
+        socket.on("error", (error) => {
+          if (!opened) reject(error);
+        });
+        socket.once("open", () => {
+          opened = true;
+          resolve();
+        });
+      }),
     close: () =>
       new Promise((resolve) => {
+        for (const extra of extras) extra.terminate();
         for (const client of wss.clients) client.terminate();
         server.close(() => resolve());
       }),
@@ -139,14 +172,21 @@ function listen(server: Server): Promise<void> {
   return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
 }
 
-function connectFakeDevice(url: string, room: string, token: string): Promise<void> {
+function connectFakeDevice(url: string, room: string, token: string, gate: { hold: boolean }): Promise<void> {
   return new Promise((resolve, reject) => {
     const socket = new WebSocket(`${url.replace(/^http/, "ws")}/v1/room/${room}/device`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    socket.on("open", () => resolve());
-    socket.on("error", (error) => reject(error));
+    let opened = false;
+    socket.on("error", (error) => {
+      if (!opened) reject(error);
+    });
+    socket.on("open", () => {
+      opened = true;
+      resolve();
+    });
     socket.on("message", (data) => {
+      if (gate.hold) return;
       const request = JSON.parse(data.toString()) as { id?: string; method?: string };
       const reply = (body: unknown) => {
         if (socket.readyState === socket.OPEN) socket.send(JSON.stringify(body));

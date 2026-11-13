@@ -107,7 +107,7 @@ claude mcp add android-bridge -- npx tsx /absolute/path/to/android-agent-bridge/
 
 Grok Bot: add a stdio MCP server with that same command and args.
 
-One-shot CLI calls use the saved config, or `ABRIDGE_RELAY_URL`, `ABRIDGE_ROOM`, and `ABRIDGE_AGENT_TOKEN`. Each call prints one JSON envelope and exits 0 on success, 1 on an error envelope.
+One-shot CLI calls use the saved config, or `ABRIDGE_RELAY_URL`, `ABRIDGE_ROOM`, and `ABRIDGE_AGENT_TOKEN`. Each call prints one JSON envelope and exits 0 on success, 1 on an error envelope. `UNAUTHORIZED` means the relay rejected the agent token: re-pair or check `ABRIDGE_AGENT_TOKEN`. `RELAY_UNREACHABLE` means the box could not open a connection: check `ABRIDGE_RELAY_URL` and that your relay is deployed; `/health` should answer. `TIMEOUT` means a request was sent and no reply came back in time. `REPLACED` means another agent session took this room; only one agent socket is allowed per room, and the next call opens a new socket.
 
 ```sh
 npx tsx src/cli.ts snapshot '{}'
@@ -163,7 +163,7 @@ Do not commit a token or a personal relay URL.
 
 ## Known limits
 
-- One phone and one agent socket per room. The relay replaces an agent socket when another one connects. `abridge mcp` keeps a single socket and multiplexes JSON-RPC ids, with a timeout on each call, so parallel tool calls in that process do not replace each other. A one-shot `abridge <method>` still opens its own socket and will replace the MCP session's socket. Reconnect happens after the MCP socket closes.
+- One phone and one agent socket per room. The relay replaces an agent socket when another one connects. `abridge mcp` keeps a single socket and multiplexes JSON-RPC ids, with a timeout on each call, so parallel tool calls in that process do not replace each other. A one-shot `abridge <method>` still opens its own socket and will replace the MCP session's socket. The MCP socket pings the relay and closes itself when a pong does not come back, so the next call reconnects after a silent drop. A close because another agent connected is `REPLACED` and does not reconnect until that next call.
 - The relay sees frame bytes. There is no end-to-end encryption yet.
 - Refs last for three snapshots. A bare `@e3` is `BAD_ARGS`. A ref whose node moved or changed identity is `STALE_REF`.
 - `list_apps` only sees launcher activities, because the manifest uses a `<queries>` filter and not a package-query permission.
